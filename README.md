@@ -1,5 +1,5 @@
 # czysciciel
-Usually is hard to remove emails from gmail account with its user interface. This tool removes it by api with the usage of gmail filters. You don't have to worry about that someone will get access to your email account because you will set up the API on your personal account.
+Usually is hard to remove emails from gmail account with its user interface. This tool removes selected emails by api with the usage of gmail filters. You don't have to worry about that someone will get access to your email account because you will set up the API on your personal account.
 Take into account: **Emails removed with this app don't go to trash. You won't recover them.**
 
 ## Installation
