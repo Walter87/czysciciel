@@ -4,6 +4,7 @@ gemfile do
   source 'https://rubygems.org'
   gem 'google-api-client'
   gem 'pry'
+  gem 'celluloid'
 end
 
 puts 'Gems installed and loaded!'
@@ -12,6 +13,8 @@ require "google/apis/gmail_v1"
 require "googleauth"
 require "googleauth/stores/file_token_store"
 require "fileutils"
+require 'celluloid/current'
+require 'logger'
 
 OOB_URI = "urn:ietf:wg:oauth:2.0:oob".freeze
 APPLICATION_NAME = "Czysciciel".freeze
@@ -22,11 +25,29 @@ CREDENTIALS_PATH = "credentials.json".freeze
 TOKEN_PATH = "token.yaml".freeze
 SCOPE = Google::Apis::GmailV1::AUTH_SCOPE
 
+class Worker
+  include Celluloid
+  Celluloid.shutdown_timeout = 30
+  Celluloid.logger = ::Logger.new("celluloid.log")
+
+  def process_batch(user_id, service, msg, index)
+    puts "Started removing page number #{index+1}"
+    ids_to_delete = msg.map(&:id)
+    request_object = Google::Apis::GmailV1::BatchDeleteMessagesRequest.new
+    request_object.ids = ids_to_delete
+
+    service.batch_delete_messages(user_id, request_object)
+
+    puts "Removed page nr #{index+1} of #{msg.count} messages"
+  end
+end
+
 ##
 # Ensure valid credentials, either by restoring from the saved credentials
 # files or intitiating an OAuth2 authorization. If authorization is required,
 # the user's default browser will be launched to approve the request.
 #
+
 # @return [Google::Auth::UserRefreshCredentials] OAuth2 credentials
 def authorize
   client_id = Google::Auth::ClientId.from_file CREDENTIALS_PATH
@@ -52,13 +73,15 @@ service.client_options.application_name = APPLICATION_NAME
 service.authorization = authorize
 
 user_id = "me"
-puts 'Write string google filter same as in google gmail client ie:from:notifications@github.com;older_than:1y'
+puts 'Type in google filter same you would use in google gmail client ie: from:support@datafeedwatch.com;older_than:1y'
 filter = gets.chomp
 
 if filter.size < 5
   puts 'Your filter seems to be too short. Exiting'
   exit!
 end
+
+puts 'Collecting ids of emails. Please wait, it can take some time...'
 
 messages = service.fetch_all(items: :messages) do |token|
   service.list_user_messages(
@@ -71,15 +94,16 @@ end
 if messages.count.zero?
   puts "No Messages found"
 else
+  worker_pool = Worker.pool(size: 5)
+  futures = []
+
   puts "#{messages.count} found with used filter and will be removed permanently. Type y and click enter to continue"
   exit! unless gets.chomp.eql?('y')
-  messages.each_slice(100).with_index do |msg, index|
-    ids_to_delete = msg.map(&:id)
-    request_object = Google::Apis::GmailV1::BatchDeleteMessagesRequest.new
-    request_object.ids = ids_to_delete
-    service.batch_delete_messages(user_id, request_object)
-    puts "Removed page nr #{index +1} of #{msg.count} messages"
+  messages.each_slice(1000).with_index do |msg, index|
+    futures.push(worker_pool.future(:process_batch, user_id, service, msg, index))
   end
+
+  futures.each(&:value)
 
   puts "Totaly remove #{messages.count} messages. Enjoy Your free space now."
 end
