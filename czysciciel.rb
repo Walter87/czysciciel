@@ -97,8 +97,20 @@ else
   worker_pool = Worker.pool(size: 5)
   futures = []
 
-  puts "#{messages.count} found with used filter and will be removed permanently. Type y and click enter to continue"
-  exit! unless gets.chomp.eql?('y')
+  puts "#{messages.count} found with used filter and will be removed permanently. Type 'y' and click enter to continue or 'n' to exit"
+
+  while user_input = gets.chomp # loop while getting user input
+    case user_input
+    when 'y'
+      puts 'removing messages'
+      break
+    when 'n'
+      exit!
+    else
+      puts "Please select either 'y' or 'n'"
+    end
+  end
+
   messages.each_slice(1000).with_index do |msg, index|
     futures.push(worker_pool.future(:process_batch, user_id, service, msg, index))
   end
