@@ -11,7 +11,7 @@ Please note: **Emails removed with this app don't go to trash. You won't be able
   5. At first usage you're gonna see link and instructions for authorizing czysciciel to access your gmail account. You won't need to do it again unless you will delete token.yml file from the local repository.
   6. You will be ask to type in google mail filter. [Here](https://support.google.com/mail/answer/7190) you can find some help on it. Test it first in google gmail client. After that you will have to wait for selected email ids. Time depends on number of emails returned by the filter. It can be couple of minutes for 
 hundreds of thousands of emails. App will exit if your filter will be less than 5 chars for safety purposes.
-  7. After getting all ids you will see how many emails will be removed, and will have to accept it by clicking 'y' and enter. If you use any other key you will exit the program.
+  7. After getting all ids you will see how many emails will be removed, and will have to accept it by clicking 'y' and enter. If you want to exit the program click 'n'.
   8. That's it.
 
 
