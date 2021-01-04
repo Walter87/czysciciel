@@ -13,7 +13,7 @@ require "google/apis/gmail_v1"
 require "googleauth"
 require "googleauth/stores/file_token_store"
 require "fileutils"
-require 'celluloid/current'
+require 'celluloid'
 require 'logger'
 
 OOB_URI = "urn:ietf:wg:oauth:2.0:oob".freeze
